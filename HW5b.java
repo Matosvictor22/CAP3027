@@ -136,7 +136,7 @@ class ImageFrame extends JFrame
     	yPos = size/2;
 	}
     
-	public void interpolateArrayStrokes(float[] strokes, int steps,float starting, float ending){
+	public void interpolateArrayStrokes(float[] strokes, float[] current, int steps,float starting, float ending){
 		
 		for(int i =0; i< strokes.length; i++){
 		/*	if(i >= 0)
@@ -154,6 +154,7 @@ class ImageFrame extends JFrame
 			}
 			*/
 			strokes[i]= (int)(starting + i*(ending-starting)/(float) steps);
+			current[i]=0.5f;
 		}
 		
 		
@@ -254,7 +255,7 @@ class ImageFrame extends JFrame
 	}
 
     
-	public void drawStrokes(BufferedImage img, Color col, float[] strokeContainer, Color[] colorContainer, float[][] xContainer, float[][] yContainer){
+	public void drawStrokes(BufferedImage img, Color col, float[] strokeContainer, float[] currentStroke, Color[] colorContainer, float[][] xContainer, float[][] yContainer){
    	 	Graphics2D g2d = (Graphics2D) img.createGraphics();
    	 	g2d.setColor(col);
    	 	g2d.setRenderingHint( 
@@ -266,9 +267,13 @@ class ImageFrame extends JFrame
     	g2d.draw(l2d);
  	 
   	for(int i =0; i < steps; i++){
+  		for(int j = 0; j<i; j++){
+  			if(currentStroke[i] <= strokeContainer[i])
+  			currentStroke[i] +=0.5;
+  		}
     	for(int stemCounter = 0; stemCounter <stemNum; stemCounter++){
-    	
-    		 g2d.setStroke(new BasicStroke(strokeContainer[i],BasicStroke.CAP_BUTT,BasicStroke.JOIN_MITER,1));
+    		
+    		 g2d.setStroke(new BasicStroke(currentStroke[i],BasicStroke.CAP_BUTT,BasicStroke.JOIN_MITER,1));
       		 g2d.setColor(colorContainer[i]);
       		 if((i+1)< steps){
       			 
@@ -303,16 +308,18 @@ class ImageFrame extends JFrame
 		    	Color colorContainer[];
 		    	float xContainer[][];
 		    	float yContainer[][];
+		    	float strokeCurrent[];
 		    	strokeContainer= new float[steps];
 		    	colorContainer= new Color[steps];
 		    	xContainer = new float[stemNum][steps];
 		    	yContainer = new float[stemNum][steps];
+		    	strokeCurrent = new float[steps];
 		    	final  BufferedImage image = new BufferedImage(size,size,BufferedImage.TYPE_INT_ARGB);
 		    	setBackground(image,Color.black);
-		    	interpolateArrayStrokes(strokeContainer,steps,6.0f,0.5f);
+		    	interpolateArrayStrokes(strokeContainer,strokeCurrent,steps,6.0f,0.5f);
 		    	interpolateArrayColors(colorContainer, steps,startingColor,endingColor);
 		    	generateCoordinates(xContainer, yContainer,stemNum,steps);
-		    	drawStrokes(image, Color.black, strokeContainer, colorContainer,xContainer,yContainer);
+		    	drawStrokes(image, Color.black, strokeContainer,strokeCurrent, colorContainer,xContainer,yContainer);
 		    	
 		    	SwingUtilities.invokeLater(new Runnable(){
 		    		public void run(){
